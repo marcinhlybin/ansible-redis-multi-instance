@@ -1,4 +1,4 @@
-# Multi instance replicated Redis with DNS support
+# Multi instance Redis with replication, failover and DNS support
 
 Features:
 
