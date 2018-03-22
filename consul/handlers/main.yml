@@ -1,0 +1,24 @@
+---
+- name: restart ferm
+  systemd:
+    name: ferm
+    state: restarted
+
+- name: restart rsyslog
+  systemd:
+    name: rsyslog
+    state: restarted
+
+- name: restart consul server
+  systemd:
+    name: consul
+    daemon_reload: yes
+    state: restarted
+  when: not consul_leader | bool
+
+- name: restart consul leader
+  systemd:
+    name: consul
+    daemon_reload: yes
+    state: restarted
+  when: consul_leader | bool

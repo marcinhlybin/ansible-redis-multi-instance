@@ -1,0 +1,67 @@
+---
+- hosts: redis
+  gather_facts: no
+  become: yes
+  vars:
+    apt_packages:
+      - htop
+      - vim
+  handlers:
+    - name: update timezone
+      command: >
+        dpkg-reconfigure --frontend noninteractive tzdata
+  tasks:
+    - name: Add backports apt repository
+      copy:
+        dest: /etc/apt/sources.list.d/backports.list
+        content: |
+          deb http://ftp.debian.org/debian stretch-backports main
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Add /etc/apt/sources.list.d/debian.list
+      copy:
+        dest: /etc/apt/sources.list.d/debian.list
+        content: |
+          deb http://ftp.pl.debian.org/debian stretch main contrib non-free
+          deb http://security.debian.org/ stretch/updates main contrib non-free
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Remove /etc/apt/sources.list file
+      file:
+        name: /etc/apt/sources.list
+        state: absent
+
+    - name: Apt-get update
+      apt:
+        update_cache: yes
+
+    - name: Set timezone
+      copy:
+        dest: /etc/timezone
+        content: Europe/Warsaw
+        owner: root
+        group: root
+        mode: 0644
+      notify: update timezone
+
+    - name: Install ntpdate
+      apt:
+        name: ntpdate
+        state: latest
+
+    - name: Run ntpdate
+      command: >
+        ntpdate pool.ntp.org
+      changed_when: False
+
+  post_tasks:
+    - name: Install apt packages
+      apt:
+        name: "{{ apt_packages }}"
+        update_cache: true
+        cache_valid_time: 3600
+        state: present

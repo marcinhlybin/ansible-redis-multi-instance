@@ -1,0 +1,56 @@
+{
+  "checks": {
+{% for name, instance in redis.iteritems() | sort %}
+    "redis_{{ instance.port }}_{{ name }}": {
+      "command": "/opt/sensu/embedded/bin/check-process.rb -p 'redis-server {{ redis_bind }}:{{ instance.port }}'",
+      "handlers": [
+          "{{ redis_sensu_checks_handlers | join('", "') }}"
+      ],
+      "interval": 30,
+      "standalone": true,
+      "silence": [
+        "{{ redis_group_name }}/redis_dns_slave_{{ instance.port }}_{{ name }}",
+        "redis_mem_{{ instance.port }}_{{ name }}"
+      ]
+    },
+
+    "redis_dns_{{ instance.role }}_{{ instance.port }}_{{ name }}": {
+      "command": "/usr/local/bin/redis-check-dns.py -n {{ name }} -r {{ instance.role }} -s 3",
+      "handlers": [
+          "{{ redis_sensu_checks_handlers | join('", "') }}"
+      ],
+      "interval": 60,
+      "standalone": true,
+      "occurrences": "{{ instance.occurrences | default(3) }}"
+    },
+
+    "sentinel_master_{{ instance.port }}_{{ name }}": {
+      "command": "/usr/local/bin/redis-check-master.py -h 127.0.0.1 -p {{ redis_sentinel_port }} -n {{ name }}",
+      "handlers": [
+          "{{ redis_sensu_checks_handlers | join('", "') }}"
+      ],
+      "interval": 60,
+      "standalone": true
+    },
+
+    "redis_quorum_{{ instance.port }}_{{ name }}": {
+      "command": "/usr/local/bin/redis-check-quorum.py -h 127.0.0.1 -p {{ redis_sentinel_port }} -n {{ name }}",
+      "handlers": [
+          "{{ redis_sensu_checks_handlers | join('", "') }}"
+      ],
+      "interval": 60,
+      "standalone": true
+    },
+
+    "redis_mem_{{ instance.port }}_{{ name }}": {
+      "command": "RUBYOPT=-W0 /opt/sensu/embedded/bin/check-redis-memory-percentage.rb -w 80 -c 90 -h 127.0.0.1 -p {{ instance.port }}",
+      "handlers": [
+          "{{ redis_sensu_checks_handlers | join('", "') }}"
+      ],
+      "interval": 60,
+      "standalone": true
+    }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  }
+}

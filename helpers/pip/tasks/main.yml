@@ -1,0 +1,39 @@
+---
+- name: Remove python-pip package
+  apt:
+    name: python-pip
+    purge: yes
+    state: absent
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install python-setuptools package
+  apt:
+    name: python-setuptools
+    state: present
+
+- name: Install pip
+  easy_install:
+    name: pip
+    state: present
+
+- name: Upgrade pip
+  pip:
+    name: pip
+    state: present
+  changed_when: false
+
+- name: Install dep packages
+  apt:
+    name: "{{ pip_dep_packages }}"
+    state: present
+
+- name: Install pip packages
+  pip:
+    name: "{{ item.key }}"
+    version: "{{ item.value.version | default(omit) }}"
+    state: "{{ item.value.state | default(pip_state) }}"
+  with_dict: "{{ pip }}"

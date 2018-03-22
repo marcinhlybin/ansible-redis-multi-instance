@@ -1,0 +1,19 @@
+consul_apt_dep_packages:
+  - libcap2-bin
+  - unzip
+  - python-termcolor
+  - python-dnspython
+  - python-redis
+
+consul_dirs:
+  - { name: '/usr/local/src/consul', state: 'directory', owner: 'root',   group: 'root',   mode: '0755' }
+  - { name: '/var/lib/consul',       state: 'directory', owner: 'consul', group: 'consul', mode: '0700' }
+  - { name: '/var/log/consul',       state: 'directory', owner: 'root',   group: 'root',   mode: '0700' }
+  - { name: '/etc/consul',           state: 'directory', owner: 'root',   group: 'root',   mode: '0755' }
+  - { name: '/etc/consul/conf.d',    state: 'directory', owner: 'root',   group: 'root',   mode: '0755' }
+
+consul_pip_packages:
+  consulate: { state: present }
+
+consul_bind_address: "{{ consul_bind }}"
+consul_client_address: "{{ consul_bind }}"

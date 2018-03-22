@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+# /etc/systemd/system/ferm.service
+[Unit]
+SourcePath=/etc/init.d/ferm
+Description=LSB: ferm firewall configuration
+DefaultDependencies=no
+Before=sysinit.target
+After=network-online.target remote-fs.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+Restart=no
+TimeoutSec=0
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=yes
+SysVStartPriority=19
+ExecStartPre=/usr/local/sbin/ferm-prestart
+ExecStart=/etc/init.d/ferm start
+ExecStop=/etc/init.d/ferm stop
+ExecReload=/etc/init.d/ferm reload

@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+#
+# Redis monitor configuration
+# redis-monitor registers master/slave redis servers in consul
+#
+[global]
+consul={{ redis_monitor_consul_host }}:{{ redis_monitor_consul_port }}
+check_interval={{ redis_monitor_check_interval }}
+log_file={{ redis_monitor_log_file }}
+log_level={{ redis_monitor_log_level }}
+
+[redis]
+{% for name, instance in redis.iteritems() if instance.state | default('present') == 'present' %}
+{{ name }}={{ instance.bind | default(redis_bind) }}:{{ instance.port }}
+{% endfor %}
+
+[sentinels]
+{% for host in redis_sentinel_hosts | sort %}
+{{ hostvars[host].redis_sentinel_bind }}:{{ hostvars[host].redis_sentinel_port }}
+{% endfor %}

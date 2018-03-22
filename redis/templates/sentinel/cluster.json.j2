@@ -1,0 +1,28 @@
+{
+  "redis": {
+{% for name, instance in redis.iteritems() | sort if instance.state | default('present') == 'present' %}
+    "{{ name }}": [
+{% for host in redis_hosts | sort if hostvars[host]['redis_enabled'] | bool %}
+{% set redis_host = hostvars[host].redis[name].bind | default(hostvars[host].redis_bind) %}
+{% set redis_port = hostvars[host].redis[name].port | default(hostvars[host].redis_port) %}
+      "{{ redis_host }}:{{ redis_port }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  },
+  "sentinel": {
+{% for name, instance in redis_sentinel_masters.iteritems() | sort if instance.state | default('present') == 'present' %}
+    "{{ name }}": [
+{% for host in redis_sentinel_hosts | sort %}
+{% set sentinel_host = hostvars[host].redis_sentinel_bind %}
+{% set sentinel_port = hostvars[host].redis_sentinel_port %}
+      "{{ sentinel_host }}:{{ sentinel_port }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  }
+}

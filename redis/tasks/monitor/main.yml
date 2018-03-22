@@ -1,0 +1,50 @@
+---
+- name: Add /etc/redis/monitor/monitor.conf file
+  template:
+    src: monitor/monitor.conf.j2
+    dest: /etc/redis/monitor/monitor.conf
+    owner: redis
+    group: redis
+    mode: '0700'
+  notify: restart redis-monitor
+
+- name: Add /usr/local/sbin/redis-monitor file
+  copy:
+    src: redis-monitor.py
+    dest: /usr/local/sbin/redis-monitor
+    owner: root
+    group: redis
+    mode: '0750'
+
+- name: Add /usr/local/sbin/redis-check file
+  copy:
+    src: redis-check.py
+    dest: /usr/local/sbin/redis-check
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Add /etc/systemd/system/redis-monitor.timer file
+  template:
+    src: monitor/monitor.timer.j2
+    dest: /etc/systemd/system/redis-monitor.timer
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart redis-monitor
+
+- name: Add /etc/systemd/system/redis-monitor.service file
+  template:
+    src: monitor/monitor.service.j2
+    dest: /etc/systemd/system/redis-monitor.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart redis-monitor
+
+- name: Start redis-monitor service
+  systemd:
+    name: redis-monitor.timer
+    daemon_reload: yes
+    enabled: yes
+    state: started

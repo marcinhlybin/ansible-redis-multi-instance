@@ -1,0 +1,21 @@
+---
+- name: Set sysctl options
+  tags: redis-sysctl, redis-limits
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/10-redis.conf
+    sysctl_set: yes
+  with_dict: "{{ redis_sysctl }}"
+
+- name: Disable transparent hugepage
+  command: >
+    echo never > /sys/kernel/mm/transparent_hugepage/enabled
+  changed_when: False
+
+- name: Disable transparent hugapage in /etc/rc.local
+  lineinfile:
+    name: /etc/rc.local
+    line: echo never > /sys/kernel/mm/transparent_hugepage/enabled
+    insertbefore: exit 0
+    state: present

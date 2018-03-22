@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Consul Agent
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Environment="GOMAXPROCS=`nproc`"
+Restart=on-failure
+User=consul
+Group=consul
+UMask=0077
+ExecStartPre=/sbin/setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/consul
+ExecStart=/usr/local/bin/consul agent -config-dir /etc/consul/conf.d -config-file=/etc/consul/consul.json
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGTERM
+PermissionsStartOnly=true
+
+[Install]
+WantedBy=multi-user.target

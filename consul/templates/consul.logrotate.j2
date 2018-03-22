@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+/var/log/consul/*.log {
+    daily
+    rotate 7
+    missingok
+    compress
+    delaycompress
+    notifempty
+    nocreate
+    copytruncate
+}

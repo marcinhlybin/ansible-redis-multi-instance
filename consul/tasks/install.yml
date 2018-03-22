@@ -1,0 +1,142 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  changed_when: false
+
+- name: Install dependency packages
+  apt:
+    name: "{{ consul_apt_dep_packages }}"
+    state: present
+
+- name: Install pip packages
+  pip:
+    name: "{{ item.key }}"
+    version: "{{ item.value.version | default(omit) }}"
+    state: "{{ item.value.state | default(pip_state) }}"
+  with_dict: "{{ consul_pip_packages }}"
+
+- name: Add consul user
+  user:
+    name: consul
+    home: /var/lib/consul
+    createhome: no
+    shell: /bin/bash
+    system: yes
+
+- name: Add consul directories
+  file:
+    name: "{{ item.name }}"
+    owner: "{{ item.owner | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    mode: "{{ item.mode | default(omit) }}"
+    state: "{{ item.state }}"
+  with_items: "{{ consul_dirs }}"
+
+- name: Check /usr/local/src/consul/consul_{{ consul_version }}_linux_amd64.zip file
+  stat:
+    path: /usr/local/src/consul/consul_{{ consul_version }}_linux_amd64.zip
+  register: stat_consul_archive
+
+- name: Set consul install archive
+  set_fact:
+    consul_install_archive: not stat_consul_archive.stat.exists or consul_force_install | bool
+
+- name: Download consul sources
+  get_url:
+    url: https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip
+    dest: /usr/local/src/consul/consul_{{ consul_version }}_linux_amd64.zip
+    owner: root
+    group: root
+    mode: '0600'
+  when: consul_install_archive
+
+- name: Unarchive consul sources
+  unarchive:
+    src: /usr/local/src/consul/consul_{{ consul_version }}_linux_amd64.zip
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    mode: '0755'
+    copy: no
+  when: consul_install_archive
+
+- name: Add /etc/systemd/system/consul.service file
+  template:
+    src: consul.service.j2
+    dest: /etc/systemd/system/consul.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart consul server
+    - restart consul leader
+
+- name: Add /etc/consul/consul.json file
+  tags: consul-config
+  template:
+    src: consul.json.j2
+    dest: /etc/consul/consul.json
+    owner: consul
+    group: consul
+    mode: '0600'
+    backup: yes
+  notify:
+    - restart consul server
+    - restart consul leader
+
+- name: Copy /etc/ferm/ansible.d/01-consul.conf file
+  tags: consul-ferm
+  template:
+    src: consul.ferm.j2
+    dest: /etc/ferm/ansible.d/01-consul.conf
+    owner: root
+    group: root
+    mode: '0600'
+    backup: yes
+  notify: restart ferm
+  when: consul_ferm_enabled | bool
+
+- name: Add /etc/profile.d/consul.sh file
+  template:
+    src: consul.profile.j2
+    dest: /etc/profile.d/consul.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Add /etc/rsyslog.d/consul.conf file
+  tags: consul-rsyslog
+  template:
+    src: consul.rsyslog.j2
+    dest: /etc/rsyslog.d/consul.conf
+    owner: root
+    group: root
+    mode: '0600'
+  notify: restart rsyslog
+
+- name: Add /etc/logrotate.d/consul file
+  tags: consul-logrotate
+  template:
+    src: consul.logrotate.j2
+    dest: /etc/logrotate.d/consul
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Start consul server
+  systemd:
+    name: consul
+    daemon_reload: yes
+    enabled: yes
+    state: started
+  when: not consul_leader | bool
+
+- name: Start consul leader
+  systemd:
+    name: consul
+    daemon_reload: yes
+    enabled: yes
+    state: started
+  when: consul_leader | bool

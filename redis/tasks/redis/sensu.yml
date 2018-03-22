@@ -1,0 +1,21 @@
+---
+- name: Add /usr/local/bin/redis-check-* files
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/bin/{{ item }}
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - redis-check-dns.py
+    - redis-check-master.py
+    - redis-check-quorum.py
+
+- name: Add redis checks to sensu
+  template:
+    src: sensu/redis.json.j2
+    dest: /etc/sensu/conf.d/redis.json
+    owner: root
+    group: sensu
+    mode: '0640'
+  notify: restart sensu-client

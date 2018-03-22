@@ -1,0 +1,30 @@
+---
+- name: Remove redis services
+  systemd:
+    name: "redis@{{ item.key }}"
+    enabled: no
+    daemon_reload: yes
+    state: stopped
+
+- name: Remove /etc/redis/*.conf files
+  file:
+    name: "/etc/redis/{{ item.key }}.conf"
+    state: absent
+
+- name: Remove /etc/redis/conf.d/*.conf files
+  file:
+    name: "/etc/redis/conf.d/{{ item.key }}.conf"
+    state: absent
+
+- name: Remove /var/log/redis/*.log* files
+  shell: >
+    /bin/rm -f -- /var/log/redis/{{ item.key }}.log*
+  args:
+    warn: no
+  when: redis_purge | bool
+
+- name: Remove /var/lib/redis/{{ item.key }}.rdb file
+  file:
+    name: "/var/lib/redis/{{ item.key }}.rdb"
+    state: absent
+  when: redis_purge | bool

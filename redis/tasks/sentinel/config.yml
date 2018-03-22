@@ -1,0 +1,71 @@
+---
+- name: Check sentinel monitor in /etc/redis/sentinel/sentinel.conf file
+  command:
+    /bin/grep -q "^sentinel monitor {{ item.key }} " /etc/redis/sentinel/sentinel.conf
+  changed_when: false
+  failed_when: false
+  register: grep_sentinel_monitor
+
+- name: Add sentinel monitor to /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    line: >
+      sentinel monitor {{ item.key }}
+      {{ hostvars[item.value.master].redis[item.key].bind | default(hostvars[item.value.master].redis_bind) }}
+      {{ hostvars[item.value.master].redis[item.key].port }}
+      {{ item.value.quorum | default(redis_sentinel_quorum) }}
+    state: "{{ item.value.state | default('present') }}"
+  notify: restart redis-sentinel
+  when: grep_sentinel_monitor | failed
+
+- name: Add sentinel-authpass to /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    regexp: '^sentinel auth-pass {{ item.key }} '
+    line: sentinel auth-pass {{ item.key }} {{ item.value.password }}
+    state: "{{ item.value.state | default('present') }}"
+  notify: restart redis-sentinel
+  when: item.value.password is defined
+
+- name: Add sentinel down-after-milliseconds to /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    regexp: '^sentinel down-after-milliseconds {{ item.key }} '
+    line: sentinel down-after-milliseconds {{ item.key }} {{ item.value.down_after_milliseconds | default(redis_sentinel_down_after_milliseconds) }}
+    state: "{{ item.value.state | default('present') }}"
+  notify: restart redis-sentinel
+  when: redis_sentinel_down_after_milliseconds != 30000
+
+- name: Add sentinel parallel-syncs to /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    regexp: '^sentinel parallel-syncs {{ item.key }} '
+    line: sentinel parallel-syncs {{ item.key }} {{ item.value.parallel_syncs | default(redis_sentinel_parallel_syncs) }}
+    state: "{{ item.value.state | default('present') }}"
+  notify: restart redis-sentinel
+  when: redis_sentinel_parallel_syncs != 1
+
+- name: Add sentinel failover-timeout to /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    regexp: '^sentinel failover-timeout {{ item.key }} '
+    line: sentinel failover-timeout {{ item.key }} {{ item.value.failover_timeout | default(redis_sentinel_failover_timeout) }}
+    state: "{{ item.value.state | default('present') }}"
+  notify: restart redis-sentinel
+  when: redis_sentinel_failover_timeout != 180000
+
+- name: Add sentinel notification-script to /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    regexp: '^sentinel notification-script {{ item.key }} '
+    line: sentinel notification-script {{ item.key }} {{ item.value.notification_script | default(redis_sentinel_notification_script) }}
+    state: "{{ item.value.state | default('present') }}"
+  notify: restart redis-sentinel
+
+- name: Add sentinel client-reconfig-script to /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    regexp: '^sentinel client-reconfig-script {{ item.key }} '
+    line: sentinel client-reconfig-script {{ item.key }} {{ item.value.client_reconfig_script | default(redis_sentinel_client_reconfig_script) }}
+    state: "{{ item.value.state | default('present') }}"
+  notify: restart redis-sentinel

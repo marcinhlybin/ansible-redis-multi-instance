@@ -1,0 +1,21 @@
+---
+- name: Expose redis variables
+  tags: always
+  set_fact:
+    redis_bind: "{{ redis_bind }}"
+    redis_sentinel_bind: "{{ redis_sentinel_bind }}"
+    redis_sentinel_port: "{{ redis_sentinel_port }}"
+
+- import_tasks: install.yml
+  tags: redis-install
+
+- import_tasks: redis/main.yml
+  tags: redis-server
+  when: redis_server_enabled | bool
+
+- import_tasks: sentinel/main.yml
+  tags: redis-sentinel
+  when: redis_sentinel_enabled | bool
+
+- import_tasks: monitor/main.yml
+  tags: redis-monitor

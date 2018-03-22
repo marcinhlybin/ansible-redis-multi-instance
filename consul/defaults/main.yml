@@ -1,0 +1,78 @@
+consul_enabled: true
+consul_version: 0.7.2
+consul_force_install: false
+consul_ferm_enabled: true
+
+consul_leader: false
+consul_start_join: "{{ consul_hosts }}"
+consul_hosts: "{{ groups[consul_group_name] }}"
+consul_group_name: consul
+
+consul_rejoin_after_leave: yes
+consul_leave_on_terminate: no
+
+consul_disable_remote_exec: yes
+consul_domain: consul.
+
+consul_dns_config:
+  allow_stale: no
+  max_stale: 5s
+  node_ttl: 0s
+  service_ttl: 0s
+  enable_truncate: no
+  only_passing: no
+
+consul_recursors: ['8.8.8.8', '4.4.4.4']
+consul_enable_syslog: yes
+consul_log_level: "INFO"
+
+consul_node_name: "{{ inventory_hostname }}"
+consul_server: true
+consul_bind: "{{ ansible_default_ipv4.address }}"
+
+consul_datacenter: default
+
+consul_bootstrap: no
+consul_bootstrap_expect: 0
+
+consul_encrypt: "" # generate with 'consul keygen'
+consul_watches: []
+
+consul_tls_enabled: no
+consul_cert_file: null
+consul_key_file: null
+consul_ca_file: null
+consul_verify_incoming: no
+consul_verify_outgoing: no
+consul_verify_server_hostname: no
+
+consul_ports:
+  dns: 8600
+  http: 8500
+  https: -1
+  rpc: 8400
+  serf_lan: 8301
+  serf_wan: 8302
+  server: 8300
+
+consul_atlas_enabled: no
+consul_atlas_infrastructure: null
+consul_atlas_token: null
+consul_atlas_join: yes
+
+consul_acl_enabled: no
+consul_acl_datacenter: null
+consul_acl_default_policy: allow
+consul_acl_down_policy: extend-cache
+consul_acl_master_token: null
+consul_acl_token: null
+consul_acl_ttl: 30
+consul_atlas_acl_token: null
+
+consul_telemetry: {}
+
+consul_forwarders: []
+
+consul_install: true
+consul_remove: false
+consul_restart: false

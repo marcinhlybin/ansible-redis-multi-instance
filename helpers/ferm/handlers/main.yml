@@ -1,0 +1,10 @@
+---
+# Reload does not run ferm-prestart script
+# Always use restart
+- name: restart ferm
+  systemd:
+    name: ferm
+    state: restarted
+
+- name: systemctl daemon-reload
+  systemd: daemon_reload=yes

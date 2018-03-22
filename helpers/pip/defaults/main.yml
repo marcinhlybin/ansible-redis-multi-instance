@@ -1,0 +1,8 @@
+---
+pip_enabled: no
+pip: {}
+pip_dep_packages:
+  - python-dev
+  - libssl-dev
+  - build-essential
+pip_state: latest

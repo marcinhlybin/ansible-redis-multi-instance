@@ -1,0 +1,11 @@
+---
+- name: Copy /etc/ferm/ansible.d/01-sentinel.conf file
+  template:
+    src: sentinel/sentinel.ferm.j2
+    dest: /etc/ferm/ansible.d/01-sentinel.conf
+    owner: root
+    group: root
+    mode: 0600
+    backup: yes
+  notify: restart ferm
+  when: redis_sentinel_ferm_enabled | bool

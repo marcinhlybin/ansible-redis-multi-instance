@@ -1,0 +1,34 @@
+---
+- name: Export vars for use in hostvars
+  tags: always
+  set_fact:
+    consul_bind: "{{ consul_bind }}"
+    consul_ports: "{{ consul_ports }}"
+
+- name: Set consul install fact
+  set_fact:
+    consul_install: "{{ not (consul_remove or consul_restart) }}"
+
+- import_tasks: install.yml
+  when: consul_install | bool
+
+- import_tasks: remove.yml
+  tags: consul-remove
+  when: consul_remove | bool
+
+- name: Restart consul cluster
+  tags: consul-restart
+  command: /bin/true
+  notify:
+    - restart consul server
+    - restart consul leader
+  when: consul_restart | bool
+
+- name: Add /usr/local/bin/consul-status file
+  tags: consul-status
+  copy:
+    src: consul-status.py
+    dest: /usr/local/bin/consul-status
+    owner: root
+    group: root
+    mode: '0755'

@@ -1,0 +1,33 @@
+---
+- name: restart ferm
+  systemd:
+    name: ferm
+    state: restarted
+
+- name: restart redis
+  systemd:
+    name: "redis@*"
+    daemon_reload: yes
+    state: restarted
+
+- name: restart redis-sentinel
+  systemd:
+    name: redis-sentinel
+    daemon_reload: yes
+    state: restarted
+
+- name: restart redis-monitor
+  systemd:
+    name: redis-monitor.timer
+    daemon_reload: yes
+    state: restarted
+
+- name: restart redis instance
+  systemd:
+    name: "redis@{{ redis_instance }}"
+    state: restarted
+
+- name: restart sensu-client
+  systemd:
+    name: sensu-client
+    state: restarted

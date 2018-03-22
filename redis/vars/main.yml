@@ -1,0 +1,34 @@
+---
+redis_dirs:
+  - { name: '/etc/redis',           state: 'directory', owner: 'root',  group: 'redis', mode: '0755' }
+  - { name: '/etc/redis/sentinel',  state: 'directory', owner: 'root',  group: 'redis', mode: '0755' }
+  - { name: '/etc/redis/monitor',   state: 'directory', owner: 'root',  group: 'redis', mode: '0750' }
+  - { name: '/var/lib/redis',       state: 'directory', owner: 'redis', group: 'redis', mode: '0700' }
+  - { name: '/var/log/redis',       state: 'directory', owner: 'redis', group: 'redis', mode: '0750' }
+  - { name: '/etc/redis/redis.conf',                                            state: 'absent' }
+  - { name: '/var/log/redis-server.log',                                        state: 'absent' }
+  - { name: '/etc/redis/redis-server.post-down.d',                              state: 'absent' }
+  - { name: '/etc/redis/redis-server.post-up.d',                                state: 'absent' }
+  - { name: '/etc/redis/redis-server.pre-down.d',                               state: 'absent' }
+  - { name: '/etc/redis/redis-server.pre-up.d',                                 state: 'absent' }
+  - { name: '/etc/systemd/system/redis.service',                                state: 'absent' }
+  - { name: '/etc/systemd/system/multi-user.target.wants/redis-server.service', state: 'absent' }
+  - { name: '/lib/systemd/system/redis.service',                                state: 'absent' }
+  - { name: '/etc/systemd/system/redis-server.service',                         state: 'absent' }
+  - { name: '/lib/systemd/system/redis-server.service',                         state: 'absent' }
+  - { name: '/usr/lib/tmpfiles.d/redis-server.conf',                            state: 'absent' }
+  - { name: '/run/redis/redis-server.pid',                                      state: 'absent' }
+  - { name: '/etc/init.d/redis-server',                                         state: 'absent' }
+  - { name: '/etc/logrotate.d/redis-server',                                    state: 'absent' }
+  - { name: '/etc/default/redis-server',                                        state: 'absent' }
+
+redis_apt_packages:
+  - redis-server
+  - redis-tools
+  - python-netifaces
+  - python-termcolor
+  - python-dnspython
+  - python-redis
+
+redis_pip_packages:
+  consulate: { state: present }

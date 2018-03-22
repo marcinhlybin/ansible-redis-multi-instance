@@ -1,0 +1,11 @@
+#!/bin/bash
+# systemd prestart exec script for ferm
+# Ansible managed
+
+shopt -s nullglob
+
+if [ -n "$(echo /etc/ferm/ansible.d/*.conf)" ] # if config files exist
+then
+  rm -f /etc/ferm/ferm.d/*.conf
+  cp -p /etc/ferm/ansible.d/*.conf /etc/ferm/ferm.d/
+fi

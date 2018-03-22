@@ -1,0 +1,5 @@
+---
+ferm_dirs:
+  - /etc/ferm
+  - /etc/ferm/ferm.d
+  - /etc/ferm/ansible.d

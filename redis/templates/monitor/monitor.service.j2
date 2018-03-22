@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Redis monitor
+
+[Service]
+Type=oneshot
+User=redis
+Group=redis
+ExecStart=/usr/local/sbin/redis-monitor
+ProtectSystem=true
+ReadWriteDirectories=-/var/log/redis

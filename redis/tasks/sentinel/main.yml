@@ -1,0 +1,93 @@
+---
+- name: Check /etc/redis/sentinel/sentinel.conf file
+  stat:
+    path: /etc/redis/sentinel/sentinel.conf
+  register: stat_sentinel_conf
+
+- name: Add /etc/redis/sentinel/sentinel.conf file
+  template:
+    src: sentinel/sentinel.conf.j2
+    dest: /etc/redis/sentinel/sentinel.conf
+    owner: redis
+    group: redis
+    mode: '0600'
+    backup: yes
+  notify: restart redis-sentinel
+  when: not stat_sentinel_conf.stat.exists
+
+- name: Adjust config in /etc/redis/sentinel/sentinel.conf file
+  lineinfile:
+    dest: /etc/redis/sentinel/sentinel.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  notify: restart redis-sentinel
+  with_items:
+    - { regexp: '^daemonize ', line: 'daemonize yes' }
+    - { regexp: '^pidfile ',   line: 'pidfile "/var/run/redis/sentinel.pid"' }
+    - { regexp: '^bind ',      line: 'bind {{ redis_sentinel_bind }} 127.0.0.1' }
+    - { regexp: '^port ',      line: 'port {{ redis_sentinel_port }}' }
+    - { regexp: '^dir ',       line: 'dir "/var/lib/redis"' }
+    - { regexp: '^loglevel ',  line: 'loglevel notice' }
+    - { regexp: '^logfile ',   line: 'logfile "/var/log/redis/sentinel.log"' }
+
+- include_tasks: config.yml
+  notify: restart redis-sentinel
+  with_dict: "{{ redis_sentinel_masters }}"
+
+- name: Add /usr/local/bin/sentinel-notify.sh file
+  template:
+    src: sentinel/sentinel.notify.sh.j2
+    dest: /usr/local/bin/sentinel-notify.sh
+    owner: redis
+    group: redis
+    mode: '0700'
+
+- name: Add /usr/local/bin/sentinel-reconfig.sh file
+  template:
+    src: sentinel/sentinel.reconfig.sh.j2
+    dest: /usr/local/bin/sentinel-reconfig.sh
+    owner: redis
+    group: redis
+    mode: '0700'
+
+- import_tasks: ferm.yml
+  when: redis_sentinel_ferm_enabled | bool
+
+- name: Add /etc/systemd/system/redis-sentinel.service file
+  template:
+    src: sentinel/sentinel.service.j2
+    dest: /etc/systemd/system/redis-sentinel.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart redis-sentinel
+
+- name: Start sentinel service
+  systemd:
+    name: redis-sentinel
+    enabled: yes
+    daemon_reload: yes
+    state: started
+
+- name: Add /etc/redis/sentinel/cluster.json file
+  tags: redis-status, redis-cluster
+  template:
+    src: sentinel/cluster.json.j2
+    dest: /etc/redis/sentinel/cluster.json
+    owner: redis
+    group: redis
+    mode: '0644'
+
+- name: Add /usr/local/bin/redis-status.sh file
+  tags: redis-status
+  copy:
+    src: redis-status.py
+    dest: /usr/local/bin/redis-status
+    owner: root
+    group: root
+    mode: '0755'
+
+- import_tasks: sensu.yml
+  tags: redis-sentinel-sensu, sensu, sensu-checks
+  when: redis_sentinel_sensu_enabled | bool

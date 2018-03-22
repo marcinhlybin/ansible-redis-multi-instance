@@ -1,0 +1,55 @@
+# {{ ansible_managed }}
+#
+#  Configuration file for ferm(1).
+#
+
+table filter {
+    chain INPUT {
+        policy {{ ferm_input_policy }};
+        mod state state (RELATED ESTABLISHED) ACCEPT;
+
+{% if ferm_allow_lo|bool %}
+        # allow local packet
+        interface lo ACCEPT;
+{% endif %}
+
+{% if ferm_allow_ping|bool %}
+        # respond to ping
+        proto icmp ACCEPT;
+{% endif %}
+
+{% if ferm_allow_ssh|bool %}
+        # allow SSH connections
+        proto tcp dport ({{ ferm_ssh_ports | join(', ') }}) ACCEPT;
+{% endif %}
+    }
+    chain OUTPUT {
+        policy {{ ferm_output_policy }};
+    }
+    chain FORWARD {
+        policy {{ ferm_forward_policy }};
+
+{% if ferm_clamp_mss_to_pmtu|bool %}
+        # set proper mss
+        proto tcp tcp-flags (SYN RST) SYN TCPMSS clamp-mss-to-pmtu;
+{% endif %}
+    }
+}
+
+{% if ferm_disable_ipv6|bool %}
+domain ip6 {
+    table filter {
+        chain INPUT {
+            policy DROP;
+        }
+        chain FORWARD {
+            policy DROP;
+        }
+        chain OUTPUT {
+            policy DROP;
+        }
+    }
+}
+{% endif %}
+
+@include 'ferm.d/';

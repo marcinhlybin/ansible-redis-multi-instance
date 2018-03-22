@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Run redis monitor perdiodically
+
+[Timer]
+OnBootSec=1m
+OnUnitActiveSec=15s
+
+[Install]
+WantedBy=timers.target

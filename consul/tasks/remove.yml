@@ -1,0 +1,22 @@
+---
+- name: Stop consul service
+  systemd:
+    name: consul
+    state: stopped
+
+- name: Remove /etc/systemd/system/consul.service file
+  file:
+    name: /etc/systemd/system/consul.service file
+    state: absent
+
+- name: Remove consul user
+  user:
+    name: consul
+    remove: true
+    state: absent
+
+- name: Remove consul directories
+  file:
+    name: "{{ item.name }}"
+    state: absent
+  with_items: "{{ consul_dirs }}"

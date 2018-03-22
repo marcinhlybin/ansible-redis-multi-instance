@@ -1,0 +1,15 @@
+redis:
+  test1:
+    role: slave
+    port: 3010
+    master: redis1
+  test2:
+    role: slave
+    port: 3020
+    master: redis1
+  test3:
+    role: master
+    port: 3030
+  test4:
+    role: master
+    port: 3040

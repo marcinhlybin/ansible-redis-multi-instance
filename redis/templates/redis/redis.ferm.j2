@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+table filter {
+  chain INPUT {
+    # Allow traffic from redis servers
+{% for host in redis_hosts | sort %}
+{% for name, instance in redis.iteritems() | sort if hostvars[host]['redis_enabled'] | bool %}
+    proto tcp dport {{ instance.port }} saddr {{ hostvars[host].redis[name].bind | default(hostvars[host].redis_bind) }} mod comment comment "traffic from {{ host }} host to instance redis-{{ name }}" ACCEPT;
+{% endfor %}
+
+{% endfor %}
+{% if redis_sentinel_enabled | bool %}
+    # Allow traffic from sentinel servers
+{% for host in redis_sentinel_hosts | sort %}
+{% for name, instance in redis.iteritems() | sort %}
+    proto tcp dport {{ instance.port }} saddr {{ hostvars[host].redis_sentinel_bind }} mod comment comment "traffic from sentinels to instance redis-{{ name }}" ACCEPT;
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+    # Allow traffic from redis clients
+{% for name, instance in redis.iteritems() %}
+{% if instance.allowed_hosts is defined %}
+    proto tcp dport {{ instance.port }} saddr ({{ instance.allowed_hosts | sort | join(' ') }}) mod comment comment "allowed hosts to instance redis-{{ name }}" ACCEPT;
+{% else %}
+    proto tcp dport {{ instance.port }} mod comment comment "incoming client to instance redis-{{ name }}" ACCEPT;
+{% endif %}
+{% endfor %}
+  }
+}

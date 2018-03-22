@@ -1,0 +1,17 @@
+redis:
+  test1:
+    role: master
+    port: 3010
+  test2:
+    role: master
+    port: 3020
+  test3:
+    role: slave
+    port: 3030
+    master: redis2
+  test4:
+    role: slave
+    port: 3040
+    master: redis2
+
+consul_leader: yes

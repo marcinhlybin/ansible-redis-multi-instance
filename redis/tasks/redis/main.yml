@@ -1,0 +1,35 @@
+---
+- import_tasks: ferm.yml
+  tags: redis-ferm
+  when: redis_ferm_enabled | bool
+
+- import_tasks: systemd.yml
+  tags: redis-systemd
+
+- import_tasks: tuning.yml
+  tags: redis-tuning
+
+- include_tasks: config.yml
+  tags: redis-config
+  when: redis_item.value.state | default('present') == 'present'
+  with_dict: "{{ redis }}"
+  loop_control:
+    loop_var: redis_item
+
+- name: Add /etc/logrotate.d/redis
+  tags: redis-logrotate
+  template:
+    src: redis/redis.logrotate.j2
+    dest: /etc/logrotate.d/redis
+    owner: root
+    group: root
+    mode: 0644
+
+- import_tasks: sensu.yml
+  tags: redis-sensu, sensu
+  when: redis_sensu_enabled | bool
+
+- include_tasks: remove.yml
+  tags: redis-remove
+  when: item.value.state | default('present') == 'absent'
+  with_dict: "{{ redis }}"

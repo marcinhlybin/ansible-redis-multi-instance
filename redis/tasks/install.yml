@@ -1,0 +1,44 @@
+---
+- block:
+  - name: Mask redis-server service
+    systemd:
+      name: redis-server
+      masked: yes
+      enabled: no
+    failed_when: false
+
+  - name: Update apt-get cache
+    apt:
+      update_cache: yes
+      cache_valid_time: 3600
+
+  - name: Install redis packages
+    apt:
+      name: "{{ redis_apt_packages }}"
+      default_release: "{{ redis_apt_default_release | default(omit) }}"
+      state: present
+
+  always:
+    - name: Unmask redis-server service
+      systemd:
+        name: redis-server
+        masked: no
+        enabled: yes
+      failed_when: false
+
+- name: Install pip packages
+  pip:
+    name: "{{ item.key }}"
+    version: "{{ item.value.version | default(omit) }}"
+    state: "{{ item.value.state | default(pip_state) }}"
+  with_dict: "{{ redis_pip_packages }}"
+
+- name: Add redis directories
+  tags: redis-dir
+  file:
+    name: "{{ item.name }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0600') }}"
+    state: "{{ item.state }}"
+  with_items: "{{ redis_dirs }}"

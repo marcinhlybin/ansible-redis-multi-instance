@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+export CONSUL_HOME=/var/lib/consul
+export CONSUL_RPC_ADDR="{{ consul_client_address }}:{{ consul_ports.rpc }}"

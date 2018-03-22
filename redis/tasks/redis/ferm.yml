@@ -1,0 +1,10 @@
+---
+- name: Copy /etc/ferm/ansible.d/01-redis.conf file
+  template:
+    src: redis/redis.ferm.j2
+    dest: /etc/ferm/ansible.d/01-redis.conf
+    owner: root
+    group: root
+    mode: 0600
+    backup: yes
+  notify: restart ferm

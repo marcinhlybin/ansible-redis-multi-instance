@@ -1,0 +1,21 @@
+# {{ ansible_managed }}
+table filter {
+  chain INPUT {
+{% for host in consul_hosts | sort %}
+    proto tcp dport {{ consul_ports.server }} saddr {{ hostvars[host].consul_bind }} mod comment comment "consul server rpc" ACCEPT;
+    proto (tcp udp) dport {{ consul_ports.serf_lan }} saddr {{ hostvars[host].consul_bind }} mod comment comment "consul serf lan" ACCEPT;
+    proto (tcp udp) dport {{ consul_ports.serf_wan }} saddr {{ hostvars[host].consul_bind }} mod comment comment "consul serf wan" ACCEPT;
+    proto tcp dport {{ consul_ports.rpc }} saddr {{ hostvars[host].consul_bind }} mod comment comment "consul cli rpc" ACCEPT;
+    proto tcp dport {{ consul_ports.http }} saddr {{ hostvars[host].consul_bind }} mod comment comment "consul http api" ACCEPT;
+{% if consul_ports.https != -1 %}
+    # HTTPS API
+    proto tcp dport {{ consul_ports.https }} saddr {{ hostvars[host].consul_bind }} mod comment comment "consul https api" ACCEPT;
+{% endif %}
+    # DNS Interface (default 8600 TCP/UDP)
+    proto (tcp udp) dport {{ consul_ports.dns }} saddr {{ hostvars[host].consul_bind }} mod comment comment "consul dns interface" ACCEPT;
+{% endfor %}
+{% for forwarder in consul_forwarders %}
+    proto (tcp udp) dport {{ consul_ports.dns }} saddr {{ forwarder }} mod comment comment "consul dns forwarder" ACCEPT;
+{% endfor %}
+  }
+}

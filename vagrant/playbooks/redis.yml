@@ -1,0 +1,32 @@
+---
+- hosts: redis
+  gather_facts: true
+  become: true
+  vars:
+  roles:
+    - { name: helpers/pip,   tags: helpers }
+    - { name: helpers/ferm,  tags: helpers }
+    - { name: redis,         tags: redis }
+    - { name: consul,        tags: consul }
+  pre_tasks:
+    - name: Check /etc/rc.local file
+      stat:
+        path: /etc/rc.local
+      register: rclocal
+
+    - name: Add /etc/rc.local file
+      copy:
+        dest: /etc/rc.local
+        content: |
+          #!/bin/bash
+          exit 0
+        owner: root
+        group: root
+        mode: 0755
+      when: not rclocal.stat.exists
+  post_tasks:
+    - name: Add consul nameserver to /etc/resolv.conf
+      lineinfile:
+        name: /etc/resolv.conf
+        line: nameserver {{ ansible_eth1.ipv4.address }}
+        insertbefore: BOF

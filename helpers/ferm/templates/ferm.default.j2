@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+# configuration for /etc/init.d/ferm
+
+{% if ansible_service_mgr != 'systemd' %}
+# run prestart script here when not using systemd
+/usr/local/sbin/ferm-prestart
+{% endif -%}
+
+# use iptables-restore for fast firewall initialization?
+FAST=yes
+
+# cache the output of ferm --lines in /var/cache/ferm?
+CACHE=yes
+
+# additional paramaters for ferm (like --def '=bar')
+OPTIONS=
+
+# Enable the ferm init script? (i.e. run on bootup)
+ENABLED="yes"

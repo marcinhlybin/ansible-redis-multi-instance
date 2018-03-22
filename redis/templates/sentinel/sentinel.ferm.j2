@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+table filter {
+  chain INPUT {
+    # Allow traffic from sentinel servers
+{% for host in redis_sentinel_hosts | sort %}
+    proto tcp dport {{ hostvars[host].redis_sentinel_port }} saddr {{ hostvars[host].redis_sentinel_bind }} mod comment comment "traffic from sentinel {{ host }} to sentinel" ACCEPT;
+{% endfor %}
+  }
+}

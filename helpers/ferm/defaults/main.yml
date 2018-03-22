@@ -1,0 +1,16 @@
+---
+ferm_enabled: no
+ferm_inventory_dir: "{{ inventory_dir }}/ferm"
+ferm_template_backup_enabled: yes
+
+ferm_input_policy: ACCEPT
+ferm_output_policy: ACCEPT
+ferm_forward_policy: ACCEPT
+
+ferm_allow_lo: yes
+ferm_allow_ping: yes
+ferm_allow_ssh: yes
+ferm_clamp_mss_to_pmtu: yes
+ferm_disable_ipv6: no
+
+ferm_ssh_ports: ['22']

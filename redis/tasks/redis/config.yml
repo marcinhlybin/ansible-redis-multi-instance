@@ -1,0 +1,67 @@
+---
+- name: Check /etc/redis/{{ redis_item.key }}.conf file
+  stat:
+    path: /etc/redis/{{ redis_item.key }}.conf
+  register: stat_redis_conf
+
+- name: Add /etc/redis/{{ redis_item.key }}.conf files
+  template:
+    src: "{{ lookup('first_found', ['../templates/redis/redis-{}.conf.j2'.format(redis_item.key), '../templates/redis/redis.conf.j2']) }}"
+    dest: /etc/redis/{{ redis_item.key }}.conf
+    owner: redis
+    group: redis
+    mode: 0640
+    backup: yes
+  notify: restart redis instance
+  when: not stat_redis_conf.stat.exists
+
+- name: Adjust config in /etc/redis/{{ redis_item.key }}.conf file
+  lineinfile:
+    dest: /etc/redis/{{ redis_item.key }}.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  notify: restart redis instance
+  with_items:
+    - { regexp: '^pidfile ',        line: 'pidfile "/var/run/redis/{{ redis_item.key }}.pid"' }
+    - { regexp: '^port ',           line: 'port {{ redis_item.value.port }}' }
+    - { regexp: '^tcp-backlog ',    line: 'tcp-backlog {{ redis_item.value.tcp_backlog | default(redis_tcp_backlog) }}' }
+    - { regexp: '^bind ',           line: 'bind {{ redis_item.value.bind | default(redis_bind) }} 127.0.0.1' }
+    - { regexp: '^timeout ',        line: 'timeout {{ redis_item.value.timeout | default(redis_timeout) }}' }
+    - { regexp: '^tcp-keepalive ',  line: 'tcp-keepalive {{ redis_item.value.tcp_keepalive | default(redis_tcp_keepalive) }}' }
+    - { regexp: '^logfile ',        line: 'logfile "/var/log/redis/{{ redis_item.key }}.log"' }
+    - { regexp: '^dbfilename ',     line: 'dbfilename "{{ redis_item.key }}.rdb"' }
+    - { regexp: '^slave-priority ', line: 'slave-priority {{ redis_item.value.slave_priority | default(redis_slave_priority) }}' }
+    - { regexp: '^maxclients ',     line: 'maxclients {{ redis_item.value.maxclients | default(redis_maxclients) }}' }
+    - { regexp: '^maxmemory ',      line: 'maxmemory {{ redis_item.value.maxmemory | default(redis_maxmemory) }}' }
+
+- name: Add masterauth to /etc/redis/{{ redis_item.key }}.conf file
+  lineinfile:
+    dest: /etc/redis/{{ redis_item.key }}.conf
+    regexp: '^masterauth '
+    line: masterauth {{ redis_item.value.master_password }}
+  notify: restart redis instance
+  when:
+    - redis_item.value.role == 'slave'
+    - redis_item.value.auth_enabled | default(redis_auth_enabled) | bool
+
+- name: Add requirepass to /etc/redis/{{ redis_item.key }}.conf file
+  lineinfile:
+    dest: /etc/redis/{{ redis_item.key }}.conf
+    regexp: '^requirepass '
+    line: requirepass {{ redis_item.value.password }}
+  notify: restart redis instance
+  when: redis_item.value.auth_enabled | default(redis_auth_enabled) | bool
+
+- name: Start redis instance {{ redis_item.key }}
+  systemd:
+    name: "redis@{{ redis_item.key }}"
+    enabled: yes
+    daemon_reload: yes
+    state: started
+
+- name: Set redis instance fact
+  set_fact:
+    redis_instance: "{{ redis_item.key }}"
+
+- meta: flush_handlers

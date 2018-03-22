@@ -1,0 +1,34 @@
+{
+  "checks": {
+    "sentinel_{{ redis_sentinel_port }}_{{ ansible_host }}": {
+      "command": "/opt/sensu/embedded/bin/check-process.rb -p 'redis-server {{ redis_sentinel_bind }}:{{ redis_sentinel_port }}'",
+      "handlers": [
+          "{{ redis_sensu_checks_handlers | join('", "') }}"
+      ],
+      "interval": 30,
+      "standalone": true,
+      "silence": [
+{%   for name, instance in redis.iteritems() | sort %}
+          "redis_quorum_{{ instance.port }}_{{ name }}",
+          "sentinel_master_{{ instance.port }}_{{ name }}",
+{%   endfor %}
+{%   for client in redis_sentinel_hosts | difference(ansible_host) | sort %}
+          "client:{{ client.split('.')[0] }}/sentinel_neigh_{{ redis_sentinel_port }}_{{ ansible_host }}"{% if not loop.last %},
+{%     endif %}
+{%   endfor %}
+      ]
+    },
+
+{% for sentinel_host in redis_sentinel_hosts | difference(ansible_host) | sort %}
+    "sentinel_neigh_{{ redis_sentinel_port }}_{{ sentinel_host }}": {
+      "command": "RUBYOPT=-W0 /opt/sensu/embedded/bin/check-redis-ping.rb -h {{ sentinel_host }} -p {{ redis_sentinel_port }} || exit 2",
+      "handlers": [
+          "{{ redis_sensu_checks_handlers | join('", "') }}"
+      ],
+      "interval": 60,
+      "standalone": true
+    }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  }
+}

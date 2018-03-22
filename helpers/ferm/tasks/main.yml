@@ -1,0 +1,73 @@
+---
+- name: Install ferm packages
+  tags: ferm-pkg
+  apt:
+    name: ferm
+    update_cache: yes
+    cache_valid_time: 3600
+    state: present
+
+- name: Create ferm directories
+  tags: ferm-dir
+  file:
+    name: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+  with_items: "{{ ferm_dirs }}"
+
+- name: Copy /etc/ferm/ferm.conf file
+  tags: ferm-config
+  template:
+    src: ferm.conf.j2
+    dest: /etc/ferm/ferm.conf
+    owner: root
+    group: root
+    mode: 0600
+    backup: "{{ ferm_template_backup_enabled }}"
+  notify: restart ferm
+
+- name: Copy prestart script
+  tags: ferm-service
+  copy:
+    src: ferm-prestart
+    dest: /usr/local/sbin/ferm-prestart
+    owner: root
+    group: root
+    mode: 0700
+
+- name: Copy /etc/systemd/system/ferm.service
+  tags: ferm-service
+  template:
+    src: ferm.service.j2
+    dest: /etc/systemd/system/ferm.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: systemctl daemon-reload
+
+- meta: flush_handlers
+
+- name: Copy /etc/default/ferm file
+  tags: ferm-service
+  template:
+    src: ferm.default.j2
+    dest: /etc/default/ferm
+    owner: root
+    group: root
+    mode: 0600
+  notify: restart ferm
+
+# - name: Add systemctl start ferm to /etc/rc.local
+#   lineinfile:
+#     name: /etc/rc.local
+#     line: /bin/systemctl start ferm
+#     insertbefore: exit 0
+
+- name: Enable ferm service
+  tags: ferm-service
+  service:
+    name: ferm
+    enabled: yes
+    state: started

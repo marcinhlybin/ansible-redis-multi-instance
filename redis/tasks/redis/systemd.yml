@@ -1,0 +1,16 @@
+---
+- name: Add /etc/tmpfiles.d/redis.conf file
+  template:
+    src: redis/redis.tmpfiles.j2
+    dest: "/etc/tmpfiles.d/redis.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Add /etc/systemd/system/redis@.service file
+  template:
+    src: redis/redis@.service.j2
+    dest: /etc/systemd/system/redis@.service
+    owner: root
+    group: root
+    mode: '0644'

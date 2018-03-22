@@ -1,0 +1,23 @@
+redis_enabled: yes
+redis_apt_default_release: stretch-backports
+redis_bind: "{{ ansible_eth1.ipv4.address }}"
+
+redis_sentinel_enabled: yes
+redis_sentinel_masters:
+  test1:
+    master: redis1
+  test2:
+    master: redis1
+  test3:
+    master: redis2
+  test4:
+    master: redis2
+
+consul_enabled: yes
+consul_server: yes
+consul_datacenter: testing
+consul_bootstrap_expect: 4
+consul_encrypt: PlSFOmbLPXHooO3nfel5+w== # generate with consul keygen
+consul_ports:
+  dns: 53
+consul_bind: "{{ ansible_eth1.ipv4.address }}"

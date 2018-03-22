@@ -1,0 +1,66 @@
+---
+redis_enabled: no
+redis_server_enabled: yes
+redis_apt_default_release: null
+redis_group_name: redis
+redis_hosts: "{{ groups[redis_group_name] }}"
+redis: {}
+
+redis_bind: "{{ ansible_default_ipv4.address }}"
+redis_tcp_backlog: 511
+redis_auth_enabled: no
+redis_timeout: 0
+redis_tcp_keepalive: 0
+redis_slave_priority: 100
+redis_maxclients: 256
+redis_maxmemory: 256mb
+
+redis_sysctl:
+  vm.overcommit_memory: 1
+  net.core.somaxconn: 2048
+  net.ipv4.tcp_max_syn_backlog: 1024
+  vm.swappiness: 0
+
+redis_ferm_enabled: yes
+redis_purge: no
+
+redis_sentinel_enabled: no
+redis_sentinel_ferm_enabled: yes
+redis_sentinel_group_name: sentinel
+redis_sentinel_hosts: "{{ groups[redis_sentinel_group_name] }}"
+redis_sentinel_masters: {}
+
+redis_sentinel_bind: "{{ redis_bind }}"
+redis_sentinel_port: 26379
+
+redis_sentinel_quorum: 2
+redis_sentinel_down_after_milliseconds: 30000 # 30 seconds
+redis_sentinel_parallel_syncs: 1
+redis_sentinel_failover_timeout: 180000 # 3 minutes
+redis_sentinel_notification_script: /usr/local/bin/sentinel-notify.sh
+redis_sentinel_client_reconfig_script: /usr/local/bin/sentinel-reconfig.sh
+
+redis_sentinel_remove: no
+redis_sentinel_purge: yes
+
+redis_monitor_consul_host: "{{ consul_client_address }}"
+redis_monitor_consul_port: "{{ consul_ports.http }}"
+redis_monitor_check_interval: 30
+redis_monitor_log_file: /var/log/redis/monitor.log
+redis_monitor_log_level: INFO
+
+redis_status_dns_host: "{{ consul_client_address }}"
+redis_status_dns_port: "{{ consul_ports.dns }}"
+
+# sentinel_notify_mail: null
+
+redis_sensu_enabled: no
+redis_sensu_server: "{{ sensu_server_host }}"
+redis_sensu_subscribers: [ "{{ redis_group_name }}" ]
+
+redis_sentinel_sensu_enabled: "{{ redis_sensu_enabled }}"
+redis_sentinel_sensu_server: "{{ redis_sensu_server }}"
+redis_sentinel_sensu_subscribers: [ "{{ redis_sentinel_group_name }}" ]
+
+redis_sensu_checks_handlers:
+  - none

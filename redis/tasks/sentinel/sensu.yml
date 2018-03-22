@@ -1,0 +1,9 @@
+---
+- name: Add redis sentinel checks to sensu
+  template:
+    src: sensu/sentinel.json.j2
+    dest: /etc/sensu/conf.d/sentinel.json
+    owner: root
+    group: sensu
+    mode: '0640'
+  notify: restart sensu-client
